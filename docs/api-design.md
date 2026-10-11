@@ -81,7 +81,6 @@ Content-Type: application/json
   "body": "Coffee, fruit, and bread."
 }
 ```
-
 Example response (`201 Created`):
 
 ```json
