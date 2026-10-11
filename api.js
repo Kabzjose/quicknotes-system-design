@@ -7,7 +7,7 @@ async function request(url, options = {}) {
     throw new Error(`Request failed with status ${response.status}`);
   }
 
-  return response.json();
+  return response;
 }
 
 function setStatus(message, state = "") {
@@ -27,16 +27,18 @@ function renderNotes(notes) {
     return;
   }
 
-  notes.forEach((note) => {
-    const noteItem = document.createElement("li");
-    const title = document.createElement("h2");
-    const body = document.createElement("p");
+  notes.forEach((note) => notesList.append(createNoteElement(note)));
+}
 
-    title.textContent = note.title;
-    body.textContent = note.body;
-    noteItem.append(title, body);
-    notesList.append(noteItem);
-  });
+function createNoteElement(note) {
+  const noteItem = document.createElement("li");
+  const title = document.createElement("h2");
+  const body = document.createElement("p");
+
+  title.textContent = note.title;
+  body.textContent = note.body;
+  noteItem.append(title, body);
+  return noteItem;
 }
 
 async function loadNotes() {
@@ -45,7 +47,8 @@ async function loadNotes() {
   setStatus("Loading notes...", "loading");
 
   try {
-    const notes = await request(`${API_URL}?_limit=10`);
+    const response = await request(`${API_URL}?_limit=10`);
+    const notes = await response.json();
     renderNotes(notes);
     setStatus(
       notes.length === 0
@@ -61,4 +64,56 @@ async function loadNotes() {
   }
 }
 
+async function createNote(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const titleInput = document.querySelector("#title-input");
+  const bodyInput = document.querySelector("#body-input");
+  const submitButton = document.querySelector("#submit-btn");
+  const title = titleInput.value.trim();
+  const body = bodyInput.value.trim();
+
+  if (!title) {
+    setStatus("Please enter a title.", "error");
+    titleInput.focus();
+    return;
+  }
+
+  if (title.length > 100) {
+    setStatus("Title must be 100 characters or fewer.", "error");
+    titleInput.focus();
+    return;
+  }
+
+  submitButton.disabled = true;
+  setStatus("Creating note...", "loading");
+
+  try {
+    const response = await request(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ title, body, userId: 1 }),
+    });
+    const note = await response.json();
+    const notesList = document.querySelector("#notes-list");
+    const emptyMessage = notesList.querySelector("li");
+
+    if (emptyMessage?.textContent === "No notes found.") {
+      notesList.replaceChildren();
+    }
+
+    notesList.prepend(createNoteElement(note));
+    setStatus(`Note created (status ${response.status}, id ${note.id}).`, "success");
+    form.reset();
+  } catch (error) {
+    setStatus("Unable to create note. Please try again.", "error");
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
 document.querySelector("#load-btn").addEventListener("click", loadNotes);
+document.querySelector("#note-form").addEventListener("submit", createNote);

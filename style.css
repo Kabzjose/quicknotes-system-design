@@ -25,6 +25,29 @@ button:disabled {
   opacity: 0.65;
 }
 
+form {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+}
+
+form div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+input,
+textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5rem;
+  font: inherit;
+}
+
 #status {
   min-height: 1.5rem;
 }
