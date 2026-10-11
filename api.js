@@ -34,10 +34,14 @@ function createNoteElement(note) {
   const noteItem = document.createElement("li");
   const title = document.createElement("h2");
   const body = document.createElement("p");
+  const deleteButton = document.createElement("button");
 
   title.textContent = note.title;
   body.textContent = note.body;
-  noteItem.append(title, body);
+  deleteButton.type = "button";
+  deleteButton.textContent = "Delete";
+  deleteButton.addEventListener("click", () => deleteNote(note.id, noteItem, deleteButton));
+  noteItem.append(title, body, deleteButton);
   return noteItem;
 }
 
@@ -112,6 +116,29 @@ async function createNote(event) {
     setStatus("Unable to create note. Please try again.", "error");
   } finally {
     submitButton.disabled = false;
+  }
+}
+
+async function deleteNote(noteId, noteItem, deleteButton) {
+  deleteButton.disabled = true;
+  setStatus("Deleting note...", "loading");
+
+  try {
+    await request(`${API_URL}/${noteId}`, { method: "DELETE" });
+    noteItem.remove();
+
+    const notesList = document.querySelector("#notes-list");
+    if (notesList.children.length === 0) {
+      renderNotes([]);
+    }
+
+    // JSONPlaceholder simulates DELETE without persisting changes, so the removal is
+    // applied locally and a later reload restores the practice API's original data.
+    setStatus(`Note deleted (status 200, id ${noteId}).`, "success");
+  } catch (error) {
+    setStatus("Unable to delete note. Please try again.", "error");
+  } finally {
+    deleteButton.disabled = false;
   }
 }
 
